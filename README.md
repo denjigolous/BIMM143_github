@@ -1,2 +1,2 @@
-# BIMM143_github
-My Classwork from Bioinformatics Lab
+# BIMM143
+My Classwork from BIMM143
