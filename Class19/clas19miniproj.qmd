@@ -316,7 +316,7 @@ To facilitate further analysis we need to “join” the rna expression data wit
 ssrna <- inner_join(rna, meta)
 ```
 
-> Q18. Make a plot of the time course of gene expression for IGHG1 gene (i.e. a plot of visit vs. tpm).
+> Q18. Make a plot of the time course of gene expression for IGHG1 gene (i.e. a plot of visit vs. tpm). 
 
 ```{r}
 ggplot(ssrna) +
