@@ -1,7 +1,7 @@
 ---
 title: "Class13"
 author: "Dennis Kim"
-format: pdf
+format: gfm
 editor: visual
 ---
 
@@ -248,10 +248,10 @@ Finally, lets pass these IDs in keggresids to the pathview() function to draw pl
 pathview(gene.data=foldchanges, pathway.id=keggresids, species="hsa")
 ```
 
-![](hsa04640.pathview.png)  
-![](hsa04630.pathview.png)  
-![](hsa00140.pathview.png)  
-![](hsa04142.pathview.png)  
+![](hsa04640.pathview.png)\
+![](hsa04630.pathview.png)\
+![](hsa00140.pathview.png)\
+![](hsa04142.pathview.png)\
 ![](hsa04330.pathview.png)
 
 # Section 3 Gene Ontology
@@ -280,10 +280,11 @@ First, Using R, output the list of significant genes at the 0.05 level as a plai
 sig_genes <- res[res$padj <= 0.05 & !is.na(res$padj), "symbol"]
 print(paste("Total number of significant genes:", length(sig_genes)))
 ```
+
 ```{r}
 write.table(sig_genes, file="significant_genes.txt", row.names=FALSE, col.names=FALSE, quote=FALSE)
 ```
 
-> Q: What pathway has the most significant “Entities p-value”? Do the most significant pathways listed match your previous KEGG results? What factors could cause differences between the two methods?
+> Q: What pathway has the most significant "Entities p-value"? Do the most significant pathways listed match your previous KEGG results? What factors could cause differences between the two methods?
 
 Signal transduction and gene expression has the most significant pathway.

@@ -1,7 +1,7 @@
 ---
 title: "Class19 Mini Project"
 author: "Dennis Kim"
-format: pdf
+format: gfm
 editor: visual
 ---
 
@@ -101,7 +101,7 @@ The CMI-PB API (like most APIs) sends responses in JSON format. Briefly, JSON da
 library(jsonlite)
 ```
 
-Let's now read the data from the CMI-PB API. 
+Let's now read the data from the CMI-PB API.
 
 ```{r}
 subject <- read_json("https://www.cmi-pb.org/api/subject", simplifyVector = TRUE)
@@ -113,6 +113,7 @@ head(subject)
 ```{r}
 table(subject$infancy_vac)
 ```
+
 There are 47 aP and 49 wP vaccinated subjects.
 
 > Q5. How many Male and Female subjects/patients are in the dataset?
@@ -120,15 +121,17 @@ There are 47 aP and 49 wP vaccinated subjects.
 ```{r}
 table(subject$biological_sex)
 ```
+
 There are 66 female and 30 male patients in this dataset.
 
-> Q6. What is the breakdown of race and biological sex (e.g. number of Asian females, White males etc…)?
+> Q6. What is the breakdown of race and biological sex (e.g. number of Asian females, White males etc...)?
 
 ```{r}
 table(subject$biological_sex, subject$race)
 ```
 
 We will be working with dates, so load the correct package.
+
 ```{r}
 library(lubridate)
 #test
@@ -151,12 +154,14 @@ library(dplyr)
 ap <- subject %>% filter(infancy_vac == "aP")
 summary( ap$age )
 ```
+
 Mean age of aP individuals are 25.52.
 
 ```{r}
 wp <- subject %>% filter(infancy_vac == "wP")
 summary( wp$age )
 ```
+
 Mean age of wP individuals are 36.36.
 
 T-test
@@ -170,6 +175,7 @@ mean(wp.age)
 
 t.test(ap.age, wp.age)
 ```
+
 The t-test returns that the age difference is significant
 
 > Q8. Determine the age of all individuals at time of boost?
@@ -199,7 +205,7 @@ specimen <- read_json("https://www.cmi-pb.org/api/specimen", simplifyVector = TR
 titer <- read_json("https://www.cmi-pb.org/api/ab_titer", simplifyVector = TRUE) 
 ```
 
-To know whether a given specimen_id comes from an aP or wP individual we need to link (a.k.a. “join” or merge) our specimen and subject data frames. The excellent dplyr package (that we have used previously) has a family of join() functions that can help us with this common task:
+To know whether a given specimen_id comes from an aP or wP individual we need to link (a.k.a. "join" or merge) our specimen and subject data frames. The excellent dplyr package (that we have used previously) has a family of join() functions that can help us with this common task:
 
 > Q9. Complete the code to join specimen and subject tables to make a new merged data frame containing all specimen records along with their associated subject details:
 
@@ -218,6 +224,7 @@ dim(abdata)
 > Q11. How many specimens (i.e. entries in abdata) do we have for each isotype?
 
 Pull up the table
+
 ```{r}
 table(abdata$isotype)
 ```
@@ -227,9 +234,8 @@ table(abdata$isotype)
 ```{r}
 table(abdata$visit)
 ```
+
 Visit 8 is still ongoing
-
-
 
 ## 4. Examine IgG1 Ab titer values
 
@@ -254,6 +260,7 @@ ggplot(ig1) +
 The antigens that show differences in the level of antibody titers over time are FIM2/3, and FHA. They are the only ones that are increasing over the duration of visits.
 
 We can attempt to examine differences between wP and aP here by setting color and/or facet values of the plot to include infancy_vac status (see below). However these plots tend to be rather busy and thus hard to interpret easily.
+
 ```{r}
 ggplot(ig1) +
   aes(MFI, antigen, col=infancy_vac ) +
@@ -263,6 +270,7 @@ ggplot(ig1) +
 ```
 
 Another version of this plot adding infancy_vac to the faceting:
+
 ```{r}
 ggplot(ig1) +
   aes(MFI, antigen, col=infancy_vac ) +
@@ -270,7 +278,7 @@ ggplot(ig1) +
   facet_wrap(vars(infancy_vac, visit), nrow=2)
 ```
 
-> Q15. Filter to pull out only two specific antigens for analysis and create a boxplot for each. You can chose any you like. Below I picked a “control” antigen (“Measles”, that is not in our vaccines) and a clear antigen of interest (“FIM2/3”, extra-cellular fimbriae proteins from B. pertussis that participate in substrate attachment).
+> Q15. Filter to pull out only two specific antigens for analysis and create a boxplot for each. You can chose any you like. Below I picked a "control" antigen ("Measles", that is not in our vaccines) and a clear antigen of interest ("FIM2/3", extra-cellular fimbriae proteins from B. pertussis that participate in substrate attachment).
 
 ```{r}
 filter(ig1, antigen=="Measles") %>%
@@ -280,7 +288,9 @@ filter(ig1, antigen=="Measles") %>%
   facet_wrap(vars(visit)) +
   theme_bw()
 ```
+
 One for FIM2/3
+
 ```{r}
 filter(ig1, antigen=="FIM2/3") %>%
   ggplot() +
@@ -292,31 +302,32 @@ filter(ig1, antigen=="FIM2/3") %>%
 
 > Q16. What do you notice about these two antigens time course and the FIM2/3 data in particular?
 
-FIM2/3 levels  rise over time and exceed that of Measles. They also appear to peak at visit 5 and then decline. This trend appears similar for for wP and aP subjects.
+FIM2/3 levels rise over time and exceed that of Measles. They also appear to peak at visit 5 and then decline. This trend appears similar for for wP and aP subjects.
 
 > Q17. Do you see any clear difference in aP vs. wP responses?
 
-aP responses are greater than wP responses in FIM2/3 antigen levels after visit 4, but less in the visits prior to. 
+aP responses are greater than wP responses in FIM2/3 antigen levels after visit 4, but less in the visits prior to.
 
 ## 5 Obtaining CMI-PB RNASeq data
 
-For RNA-Seq data the API query mechanism quickly hits the web browser interface limit for file size. We will present alternative download mechanisms for larger CMI-PB datasets in the next section. However, we can still do “targeted” RNA-Seq querys via the web accessible API.
+For RNA-Seq data the API query mechanism quickly hits the web browser interface limit for file size. We will present alternative download mechanisms for larger CMI-PB datasets in the next section. However, we can still do "targeted" RNA-Seq querys via the web accessible API.
 
-The link is for the key gene involved in expressing any IgG1 antibody, namely the IGHG1 gene. Let’s read available RNA-Seq data for this gene into R and investigate the time course of it’s gene expression values.
+The link is for the key gene involved in expressing any IgG1 antibody, namely the IGHG1 gene. Let's read available RNA-Seq data for this gene into R and investigate the time course of it's gene expression values.
+
 ```{r}
 url <- "https://www.cmi-pb.org/api/v2/rnaseq?versioned_ensembl_gene_id=eq.ENSG00000211896.7"
 
 rna <- read_json(url, simplifyVector = TRUE) 
 ```
 
-To facilitate further analysis we need to “join” the rna expression data with our metadata meta, which is itself a join of sample and specimen data. This will allow us to look at this genes TPM expression values over aP/wP status and at different visits (i.e. times):
+To facilitate further analysis we need to "join" the rna expression data with our metadata meta, which is itself a join of sample and specimen data. This will allow us to look at this genes TPM expression values over aP/wP status and at different visits (i.e. times):
 
 ```{r}
 #meta <- inner_join(specimen, subject)
 ssrna <- inner_join(rna, meta)
 ```
 
-> Q18. Make a plot of the time course of gene expression for IGHG1 gene (i.e. a plot of visit vs. tpm). 
+> Q18. Make a plot of the time course of gene expression for IGHG1 gene (i.e. a plot of visit vs. tpm).
 
 ```{r}
 ggplot(ssrna) +
@@ -325,7 +336,7 @@ ggplot(ssrna) +
   geom_line(alpha=0.2)
 ```
 
-> Q19.: What do you notice about the expression of this gene (i.e. when is it at it’s maximum level)?
+> Q19.: What do you notice about the expression of this gene (i.e. when is it at it's maximum level)?
 
 The expression of the gene is at the max level at visit 4
 
@@ -334,6 +345,7 @@ The expression of the gene is at the max level at visit 4
 The trend does not match as the antibodies made in the cells are long lived but the expression cuts off short.
 
 We can dig deeper and color and/or facet by infancy_vac status:
+
 ```{r}
 ggplot(ssrna) +
   aes(tpm, col=infancy_vac) +
@@ -350,5 +362,3 @@ ssrna %>%
     aes(tpm, col=infancy_vac) + geom_density() + 
     geom_rug() 
 ```
-
-
