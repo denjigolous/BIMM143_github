@@ -1,0 +1,322 @@
+---
+title: "Class08 Mini Project"
+author: "Dennis Kim"
+format: gfm
+editor: visual
+---
+
+## Input the data into our document
+
+```{r}
+wisc.df <- read.csv("WisconsinCancer.csv", row.names=1)
+head(wisc.df)
+```
+
+Wisc.df\$diagnosis is a pathologist provided expert diagnosis, we will not use this for our unsupervised analysis as it is the "answer" to the question of which cells are malignant or benign.
+
+To remove this, create a new data frame that omits the first column
+
+```{r}
+wisc.data <- wisc.df[,-1]
+head(wisc.data)
+```
+
+Create a new separate vector called "diagnosis" that will contain the data from the diagnosis column of the original data set. We will store this as a factor (which is useful for plotting) and use this to check our results.
+
+```{r}
+diagnosis <- as.factor(wisc.df[,1])
+wisc.data <- wisc.df[,-1]
+head(wisc.data)
+```
+
+## Exploratory data analysis
+
+> Q1. How many observations are in this dataset?
+
+```{r}
+nrow(wisc.data)
+```
+
+There are 569 observations in this set
+
+> Q2. How many of the observations have a malignant diagnosis?
+
+```{r}
+table(wisc.df$diagnosis)
+```
+
+There are 212 malignant diagnosis.
+
+> Q3. How many variables/features in the data are suffized with "\_mean"?
+
+First find the column names
+
+```{r}
+colnames(wisc.data)
+```
+
+Next I need to search within the column names for the suffix "\_mean" pattern. The `grep()` function might help here.
+
+```{r}
+#grep("search input", the data to search through)
+grep("_mean", colnames(wisc.data))
+#only counts out how many, use `length()` to count it all at once
+length(grep("_mean", colnames(wisc.data)))
+```
+
+There are 10 variables that are suffixed "\_mean"
+
+> How many dimensions are in this dataset?
+
+```{r}
+ncol(wisc.data)
+```
+
+# Performing PCA
+
+Check the column means and standard deviations
+
+```{r}
+colMeans(wisc.data)
+apply(wisc.data, 2, sd)
+```
+
+Execute PCA with the prcomp() function on the wisc.data, scaling if appropriate, and assign the output model to wisc.pr.
+
+```{r}
+wisc.pr <- prcomp(wisc.data, scale=TRUE)
+#take note that the measurements are not consistent throughout the data set, set the scale=TRUE to scale it properly so that it is not dominated by one column that is not measured correctly
+```
+
+Look at the summary of the results
+
+```{r}
+summary(wisc.pr)
+```
+
+> Q4. From your results, what proportion of the original variance is captured by the first principal components (PC1)?
+
+44.27% was captured
+
+> Q5. How many principal components (PCs) are required to describe at least 70% of the original variance in the data?
+
+3 PCs capture over 70% of the original variance (look at the cumulative proportion)
+
+> Q6. How many principal components (PCs) are required to describe at least 90% of the original variance in the data?
+
+7 PCs are required to describe at least 90% of the original variance
+
+> Q7. What stands out to you about this plot? Is it easy or difficult to understand? Why?
+
+It is difficult to understand as it overlaps too much and crowds the plot.
+
+## PC Plot
+
+Time to create our own plot of PC1 vs PC2 (a.k.a score plot, PC-plot, etc.) The main result of PCA...
+
+```{r}
+# Scatter plot observations by components 1 and 2
+plot( wisc.pr$x[,1], wisc.pr$x[,2],
+     xlab = "PC1", ylab = "PC2", col=diagnosis)
+```
+
+Can also run in ggplot2
+
+```{r}
+library(ggplot2)
+
+pc <- as.data.frame(wisc.pr$x)
+pc$diagnosis <- diagnosis
+
+ggplot(pc, aes(PC1, PC2, col=pc$diagnosis)) +geom_point()
+```
+
+# Variance explained
+
+Calculate the variance of each component by squaring the sdev component of wisc.pr (ex. wisc.pr\$sdev\^2) and save it as pr.var
+
+```{r}
+pr.var <- wisc.pr$sdev^2
+head(pr.var)
+```
+
+Calculate the variance explained by each principal component by dividing the total variance explained of all principal components. Assign this to a variable called pve and create a plot of the variance explained for each principal component
+
+```{r}
+pve <- pr.var/sum(pr.var)
+#plot variance
+plot(pve, xlab = "Principal Component", ylab = "Proportion of Variance Explained", ylim=c(0,1), type="o")
+```
+
+Can also use in bar plot form
+
+```{r}
+# Alternative scree plot of the same data, note data driven y-axis
+barplot(pve, ylab = "Precent of Variance Explained",
+     names.arg=paste0("PC",1:length(pve)), las=2, axes = FALSE)
+axis(2, at=pve, labels=round(pve,2)*100) 
+```
+
+Optional Plot: can use a CRAN package for PCA known as `factoextra` Make sure to install it first and access with library
+
+```{r}
+##ggplot based graph
+#install.packages("factoextra")
+library(factoextra)
+fviz_eig(wisc.pr, addlabels = TRUE)
+```
+
+# Communicating PCA results
+
+How much do the original variables contribute to the new PCs that were calculated? To get at this data, we can look at the `$rotation` component of he returned PCA object.
+
+```{r}
+head(wisc.pr$rotation[,1:3])
+```
+
+Focus in on PC1
+
+```{r}
+head(wisc.pr$rotation[,1])
+```
+
+> Q9. For the first principal component, what is the component of the loading vector (i.e. wisc.pr\$rotation\[,1\]) for the feature concave.points_mean?
+
+```{r}
+wisc.pr$rotation["concave.points_mean",1]
+```
+
+There is a complicated mix of variables that go together to make up PC1 - i.e. there are many of the original variables that react highly to PC1
+
+```{r}
+loadings <- as.data.frame(wisc.pr$rotation)
+ggplot(loadings) + aes(PC1, rownames(loadings)) + geom_col()
+```
+
+> Q10. What is the minimum number of principal components required to explain 80% of the variance of the data?
+
+The minimum number required is 5 PC
+
+# 3. Heirarchal Clustering
+
+Time to scale the data
+
+```{r}
+data.scaled <- scale(wisc.data)
+#calculate the (euclidean) distances between all pairs of observations in the new data set
+data.dist <- dist(data.scaled)
+#create a hierarchical clustering model using complete linkage
+wisc.hclust <- hclust(data.dist, method="complete")
+```
+
+Plot the cluster
+
+```{r}
+plot(wisc.hclust)
+```
+
+Cut the tree to yield cluster membership vector with `cutree()` function
+
+```{r}
+grps <- cutree(wisc.hclust, k=4)
+#can also do with h for height = 19
+table(grps)
+```
+
+```{r}
+table(grps, diagnosis)
+```
+
+> Q11. Using the plot() and abline() functions, what is the height at which the clustering model has 4 clusters?
+
+h=19
+
+```{r}
+plot(wisc.hclust)
+abline(h=19, col="red", lty=2)
+```
+
+> Q12. Can you find a better cluster vs diagnoses match by cutting into a different number of clusters between 2 and 10?
+
+# Combine PCA and HCLUST
+
+My PCA results were interesting as they showed a separation of M and B along PC1
+
+```{r}
+plot(wisc.pr$x[,1], wisc.pr$x[,2], col=diagnosis)
+```
+
+I want to cluster my PCA results, that is use `wisc.pr$x` as input to `hclust()`
+
+Try clustering 3 PCs first, PC1, PC2 and PC3 as input
+
+```{r}
+d <- dist(wisc.pr$x[,1:3])
+
+wisc.pr.hclust <- hclust(d,method="ward.D2")
+```
+
+And my tree figure
+
+```{r}
+plot(wisc.pr.hclust)
+```
+
+Let's cut this into 2 groups/clusters
+
+```{r}
+grps <- cutree(wisc.pr.hclust, k=2)
+table(grps)
+```
+
+```{r}
+plot(wisc.pr$x[,1], wisc.pr$x[,2], col=grps)
+```
+
+```{r}
+plot(wisc.pr$x[,1:2], col=diagnosis)
+# just creates a color swap
+```
+
+How well do the two clusters separate the M and B diagnoses?
+
+```{r}
+table(grps, diagnosis)
+```
+
+How accurate is this?
+
+```{r}
+(179+333)/nrow(wisc.data)
+```
+
+2 clusters work better
+
+> Q13. Which method gives your favorite results for the same data.dist dataset? Explain your reasoning.
+
+The second method of setting an hclust of the wisc.pr\$x as it scales and separates the data more in accordance to the percentage of the data that matches. When creating the cluster dendrogram it organizes and separates the groups into two nicer looking groups.
+
+> Q14. Optional\* How well does k-means separate the two diagnoses? How does it compare to your hclust results?
+
+> Q15. How well does the newly created model with four clusters separate out the two diagnoses?
+
+```{r}
+## Use the distance along the first 7 PCs for clustering i.e. wisc.pr$x[, 1:7]
+wisc.pr.hclust <- hclust(dist(wisc.pr$x[,1:7]), method="ward.D2")
+```
+
+Cut cluster into 2
+
+```{r}
+wisc.pr.hclust.clusters <- cutree(wisc.pr.hclust, k=2)
+# use table to compare results
+table(wisc.pr.hclust.clusters, diagnosis)
+```
+
+How well does it work?
+
+```{r}
+(188+329)/nrow(wisc.data)
+```
+
+This is slightly more accurate at 90.86%

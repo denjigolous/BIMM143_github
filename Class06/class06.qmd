@@ -1,0 +1,207 @@
+---
+title: "Class 06"
+author: "Dennis Kim"
+format: gfm
+---
+
+## R Functions 
+
+In this class we will work on the process of developing our own function for calculating the average grades for fictional students in a fictional class.
+
+We will start with a simplified version of the problem. Grade some vectors of student scores. We want to drop the lowest score and get the average.
+
+```{r}
+# Example input vectors to start with
+student1 <- c(100, 100, 100, 100, 100, 100, 100, 90)
+student2 <- c(100, NA, 90, 90, 90, 90, 97, 80)
+student3 <- c(90, NA, NA, NA, NA, NA, NA, NA)
+```
+
+We can use the `mean()` function to get the average:
+
+```{r}
+mean(student1)
+```
+
+We can find the smallest value with the `min()` function
+
+```{r}
+min(student1)
+```
+
+There is also the `which.min()` function. Let's see if this can help:
+```{r}
+which.min(student1)
+```
+
+```{r}
+student1[which.min(student1)]
+```
+
+example
+```{r}
+x <- 1:5
+x
+```
+
+```{r}
+x[-4]
+```
+back to the main topic, average score of student 1 without the lowest score
+```{r}
+mean(student1[-which.min(student1)])
+```
+
+What about student 2?
+```{r}
+student2
+```
+
+```{r}
+mean(student2[-which.min(student2)])
+```
+
+```{r}
+which.min(student2)
+```
+
+```{r}
+student2[-which.min(student2)]
+```
+
+```{r}
+mean(student2[-which.min(student2)])
+```
+
+Can I use this `na.rm=TRUE` argument here?
+```{r}
+mean(student2[-which.min(student2)], na.rm=TRUE)
+```
+
+Well, what about student 3?
+
+```{r}
+student3
+```
+```{r}
+mean(student3, na.rm=TRUE)
+```
+This is not what we want, as it removes all of the NA's and does not help us here.
+
+With the power of the friendship and the internet, we have found the `is.na()` function, but what is it and how does it work?
+
+```{r}
+student3
+is.na(student3)
+```
+
+`is.na()` will identify if there are NA values, and you can convert those NA values into zeros but setting them with `"groupname"[is.na("groupname")] = 0)`
+
+```{r}
+x <- student3
+x[is.na(x)] <- 0
+mean(x[-which.min(x)])
+```
+
+Whoo it works and this is now going to be the body of our function. 
+
+All functions in R have at least 3 things:
+
+- A name (we pick that)
+- Input arguments
+- A body (the code that does the work)
+
+```{r}
+grade <- function(x){
+  # Mask NA to zero
+  x[is.na(x)] <- 0
+  # Drop lowest value and get mean
+  mean(x[-which.min(x)])
+}
+```
+
+Lets try it out (make sure to run the code, if there is an error where it cannot find the function, just run the code first (to introduce it to r) and then try again)
+
+```{r}
+grade(student1)
+grade(student2)
+grade(student3)
+```
+
+# 1) Lets use the grade function to determine the overall grade of assignments while dropping the lowest score
+
+Lets try it on the given data set
+```{r}
+gradebook <- read.csv("https://tinyurl.com/gradeinput", row.names=1)
+head(gradebook)
+```
+
+our `grade()` function does not work, we need to observe with something else. I can use the super useful but a bit more complicated `apply()` function to use our existing `grade()` function on the whole class gradebook.
+
+How does this `apply()` function work?
+`apply()` goes in this order, `apply(input, margin (= 1 for rows, = 2 for columns), function)`, or in our case `apply(gradebook (the data set), 1 (we want to apply this to our rows), grade (the function we want to apply))
+
+```{r}
+results <- apply(gradebook, 1, grade)
+```
+
+# 2) To sort by score
+
+```{r}
+results[order(results, decreasing = TRUE)]
+# call back the results using the order function
+```
+
+From this we can see that the top scoring student is student 18 with an average score of 94.5.
+
+# 3) What assignment was the toughest on the students?
+
+To sort by assignment, use `apply()` but change the margin to 2
+
+```{r}
+tough.assignment <- apply(gradebook, 2, sum, na.rm=TRUE)
+tough.assignment
+```
+From these results, we can see that hw2 was the toughest on students.
+
+```{r}
+# not a good way
+which.min(apply(gradebook, 2, mean, na.rm=TRUE))
+```
+From this it shows homework 3 is the worst assignment, however this is incorrect as it removes the NA scores altogether. 
+
+If I want to use the mean approach, I will need to mask the NA (missing assignments)
+
+```{r}
+mask <- gradebook
+mask[is.na(mask)]=0
+mask
+which.min(apply(mask, 2, mean))
+```
+
+
+```{r}
+mean(results)
+```
+
+# 4) From the gradebook analysis, which was the most predicative of the overall score
+
+Look at the correlation between the average homework scores and student's average scores
+
+I will use the `cor()` function 
+
+```{r}
+noNAgrades <- gradebook
+noNAgrades[is.na(noNAgrades)]=0
+correlation <- cor(noNAgrades, results)
+correlation
+```
+From the results, homework 5 has the highest correlation to the grades of the students and as a result is the most predictive of the overall score
+
+I want to use the `apply()` function as well
+(mask and noNAgrades are the same, just have different names)
+
+```{r}
+apply(mask, 2, cor, y=results)
+```
+

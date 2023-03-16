@@ -1,0 +1,4 @@
+ i-0b678db0800fc62f7
+
+
+ssh -i "ddk003_bimm143.pem" ubuntu@ec2-35-162-16-41.us-west-2.compute.amazonaws.com

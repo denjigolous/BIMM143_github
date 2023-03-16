@@ -1,0 +1,233 @@
+---
+title: "Class07: Machine Learning 1 Lab"
+author: "Dennis Kim"
+format: pdf
+---
+
+In this class we will explore clustering and dimensionality reduction methods.
+
+## K-means
+
+Make up some input data where we know what the answer should be.
+
+```{r}
+tmp <-  c(rnorm(30, -3), rnorm(30,3))
+x <- cbind(x = tmp, y = rev(tmp))
+head(x)
+```
+Quick plot of x to see the two groups at (-3,3) and (3,-3)
+```{r}
+plot(x)
+```
+
+Use the `kmeans()` function setting k to 2 and nstart=20
+
+```{r}
+km <- kmeans(x, centers=2, nstart=20)
+km
+```
+
+Inspect/print the results (print km)
+
+> Q. How many points are in each cluster?
+
+```{r}
+km$size
+```
+
+> Q. What component of your result object details
+  - cluster assignment/membership
+  - cluster center?
+  
+```{r}
+km$cluster
+km$centers
+```
+  
+> Q. Plot x colored by the kmeans cluster assignment and add cluster centers as blue points
+
+```{r}
+plot(x, col=km$cluster)
+points(km$centers, col="blue", pch=15, cex=2)
+```
+
+Play with kmeans and ask for a different number of clusters
+```{r}
+km <- kmeans(x, centers=4, nstart=20)
+plot(x, col=km$cluster)
+points(km$centers, col="blue", pch=15, cex=2)
+```
+
+#Hierarchial Clustering `hcluster()`
+
+This is another very useful and widely employed clustering method which has the advantage over kmeans in that it can help reveal the something of the true grouping in your data
+
+The `hclust()` function wants a distance matrix as input. We can get this from the `dist()` function
+
+```{r}
+d <- dist(x)
+hc <- hclust(d)
+hc
+```
+
+There is a plot method for hclust results:
+
+```{r}
+plot(hc)
+abline(h=10, col="red")
+```
+
+To get my cluster membership vector, I need to "cut" my tree to yield sub-trees or branches with all the members of a given cluster residing on the same cut branch. The function is called `cutree()`
+
+```{r}
+grps <- cutree(hc, h=10)
+grps
+```
+
+```{r}
+plot(x, col=grps)
+```
+
+It is often helpful to use the `k=` argument to cutree rather than the `h=` hieght of cutting with `cutree()`. This will cut the tree to yield the number of clusters you want
+
+```{r}
+cutree(hc, k=4)
+```
+
+# Principal Component Analysis (PCA)
+
+The base R function for PCA is called `prcomp()`
+
+
+
+##PCA of UK food import
+
+Access data
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url)
+```
+
+> Q1 How many rows and columns are there in your new data frame?
+
+```{r}
+nrow(x)
+ncol(x)
+# or you can do `dim()`
+dim(x)
+```
+There are 17 rows and 5 columns
+
+```{r}
+head(x)
+```
+This gives us a title that we do not want, so we must remove it
+```{r}
+rownames(x) <- x[,1]
+x <- x[,-1]
+head(x)
+```
+Run the `dim()` function again
+```{r}
+dim(x)
+```
+
+Can alternatively use 
+```{r}
+x <- read.csv(url, row.names=1)
+head(x)
+```
+This runs the code by reading the data frame and argues with the data frame so that the column is run first.
+
+> Q2 Which approach is more preferable
+
+I prefer the second output as it deals with the issue after running the code once, where as the first method is prone to syntax errors from accidentally missing commas or brackets.
+
+Spotting major differences and trends. Generate a bar plot
+```{r}
+barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
+```
+
+> Q3 Changing what optional arguement will generate a different plot
+
+Changing the beside argument to false change the plot
+```{r}
+barplot(as.matrix(x), beside=F, col=rainbow(nrow(x)))
+```
+
+> Q4 There is no Q4
+> Q5 Can you make sense of the following code and resulting figure? What does it mean if a given point lies on the diagonal for a given plot?
+
+The points on the plot are the values from the two countries it is comparing itself with, where one axis will be one country and the other being the other country. If a point lies on the diagonal, that means it is correlated with the rest of the points on the diagonal.
+```{r}
+pairs(x, col=rainbow(10), pch=16)
+```
+> Q6 What is the main differences between N. Ireland and the other countries of the UK in terms of this data-set?
+
+The main difference between N. Ireland and other countries of the UK is that there are two points that are not aligned with the diagonal. 
+
+PCA to the rescue
+
+```{r}
+# use the `prcomp()` function
+pca <- prcomp(t(x))
+summary(x)
+```
+
+A "PCA plot" (a.k.a "Score plot", PC1 vs PC2 plot, etc.)
+
+```{r}
+pca$x
+```
+
+
+> Q7 Complete the code below to generate a plot of PC1 vs PC2. The second line adds text labels over the data points.
+
+```{r}
+# Plot PC1 vs PC2
+plot(pca$x[,1], pca$x[,2], 
+     col=c("orange", "red", "blue", "darkgreen"), pch=15, 
+     xlab="PC1", ylab="PC2", xlim=c(-270,500))
+text(pca$x[,1], pca$x[,2], colnames(x))
+```
+
+> Q8 Customize your plot so that the colors of the country names match the colors in our UK and Ireland map and table at start of this document.
+
+```{r}
+# Plot PC1 vs PC2
+plot(pca$x[,1], pca$x[,2], 
+     col=c("orange", "red", "blue", "darkgreen"), pch=15, 
+     xlab="PC1", ylab="PC2", xlim=c(-270,500))
+text(pca$x[,1], pca$x[,2], colnames(x), col=c("orange", "red", "blue", "darkgreen"))
+```
+
+Before we start to use the square of pca$sdev, which stands for standard deviation, to calculate how much variation in the original data each PC accounts for,
+
+```{r}
+v <- round( pca$sdev^2/sum(pca$sdev^2) * 100 )
+v
+## or the second row here...
+z <- summary(pca)
+z$importance
+```
+
+This information can be summarized in a plot of the variances (eigenvalues) with respect to the principal component number (eigenvector number), which is given in the next code.
+
+```{r}
+barplot(v, xlab="Principal Component", ylab="Percent Variation")
+```
+
+Digging deeper, we can also consider the influence of each of the original variables upon the principal components (a.k.a loading scores). The information can be obtained form `prcomp()` and the `$rotation` component. It can also be summarized to `biplot()`.
+
+```{r}
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,1], las=2 )
+```
+
+> Q9 Generate a similar ‘loadings plot’ for PC2. What two food groups feature prominantely and what does PC2 maninly tell us about?
+
+```{r}
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,2], las=2) 
+```
+There major shifts are between potatoes and soft drinks
