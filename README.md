@@ -12,7 +12,7 @@ My Classwork from [BIMM143](https://github.com/denjigolous/BIMM143_github) at UC
 - Class 11: [Genome informatics and high throughput sequencing](https://github.com/denjigolous/BIMM143_github/blob/main/Class11/lab11.md)
 - Class 12: [Transcriptomics, RNA seq Analysis, and the interpretation of gene lists](https://github.com/denjigolous/BIMM143_github/blob/main/Class12/class12and13.md)
 - Class 13: [RNA seq Mini Project](https://github.com/denjigolous/BIMM143_github/blob/main/Class13/class13.md)
-- Class 14: [Hands on with Git and Github](https://github.com/denjigolous/BIMM143_github/tree/main/Class14)
+- Class 14: [Hands on with Git and Github](https://github.com/denjigolous/BIMM143_github/blob/main/Class14/Git%20Bash.lnk)
 - Class 15: [Essential UNIX for bioinformatics](https://github.com/denjigolous/BIMM143_github/tree/main/Class15)
 - Class 16: [Analyzing sequencing data in the cloud](https://github.com/denjigolous/BIMM143_github/blob/main/Class16/class16.md)
 - Class 17: [Vaccination Rate Mini Project](https://github.com/denjigolous/BIMM143_github/blob/main/Class17/Class17_mini_proj.md)
